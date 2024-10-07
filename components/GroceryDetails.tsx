@@ -1,7 +1,8 @@
 import React, { forwardRef } from "react";
-import { View, Text, StyleSheet, ScrollView, Button } from "react-native";
+import { Text, StyleSheet, ScrollView, Button } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { GroceryItem as GroceryType } from "@/types/GroceryItem";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 
 type GroceryDetailsProps = {
@@ -12,15 +13,31 @@ type GroceryDetailsProps = {
 
 const GroceryDetails = forwardRef<BottomSheet, GroceryDetailsProps>(
 	({ grocery, isVisible, onClose }, ref) => {
+		const addToCart = async () => {
+			try {
+				const currentCart = await AsyncStorage.getItem("cart");
+				const cartItems = currentCart ? JSON.parse(currentCart) : [];
+				cartItems.push(grocery);
+				await AsyncStorage.setItem("cart", JSON.stringify(cartItems));
+				alert("Item added to cart!");
+			} catch (error) {
+				console.error("Failed to add item to cart", error);
+			}
+		};
+
 		return (
 			<BottomSheet
-				ref={ref} // Attach the ref here
+				ref={ref}
 				index={0}
-				snapPoints={["50%", "90%"]}
+				snapPoints={["50%", "75%"]}
 				onClose={onClose}
 				enablePanDownToClose={true}
+				style={{
+					borderTopWidth: 1,
+					borderTopColor: "#bdbdbd",
+				}}
 			>
-				<BottomSheetView style={styles.sheet}>
+				<BottomSheetView>
 					<ScrollView contentContainerStyle={styles.content}>
 						<Image
 							source={{ uri: grocery.images[0] }}
@@ -31,12 +48,7 @@ const GroceryDetails = forwardRef<BottomSheet, GroceryDetailsProps>(
 						<Text style={styles.description}>{grocery.description}</Text>
 						<Text style={styles.stock}>Stock: {grocery.stock}</Text>
 						<Text style={styles.rating}>Rating: {grocery.rating}</Text>
-						<Button
-							title="Order"
-							onPress={() => {
-								/* Handle order */
-							}}
-						/>
+						<Button title="Order" onPress={addToCart} />
 					</ScrollView>
 				</BottomSheetView>
 			</BottomSheet>
@@ -45,10 +57,6 @@ const GroceryDetails = forwardRef<BottomSheet, GroceryDetailsProps>(
 );
 
 const styles = StyleSheet.create({
-	sheet: {
-		borderTopWidth: 1,
-		borderTopColor: "#ddd",
-	},
 	content: {
 		padding: 16,
 	},

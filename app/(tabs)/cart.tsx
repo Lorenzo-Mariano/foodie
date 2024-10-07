@@ -1,71 +1,85 @@
-import { View, Text, StyleSheet, FlatList, Alert, Button } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { View, Text, FlatList, Button, StyleSheet, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Sizes } from "@/constants/Sizes";
+import { GroceryItem as GroceryType } from "@/types/GroceryItem";
+import { useFocusEffect } from "expo-router";
 
-export default function Donations() {
-	const [donations, setDonations] = useState([]);
+const Cart = () => {
+	const [cartItems, setCartItems] = useState<GroceryType[]>([]);
 
-	const loadDonations = async () => {
-		try {
-			const storedDonations = await AsyncStorage.getItem("donations");
-			if (storedDonations) {
-				setDonations(JSON.parse(storedDonations));
-			}
-		} catch (error) {
-			Alert.alert("Error", "Failed to load donations");
-		}
+	useFocusEffect(
+		React.useCallback(() => {
+			const fetchCartItems = async () => {
+				try {
+					const storedItems = await AsyncStorage.getItem("cart");
+					if (storedItems) {
+						setCartItems(JSON.parse(storedItems));
+					}
+				} catch (error) {
+					console.error("Failed to fetch cart items", error);
+				}
+			};
+
+			fetchCartItems();
+		}, [])
+	);
+
+	const removeItem = async (id: number) => {
+		const updatedItems = cartItems.filter((item) => item.id !== id);
+		setCartItems(updatedItems);
+		await AsyncStorage.setItem("cart", JSON.stringify(updatedItems));
 	};
 
-	const handleRefresh = () => {
-		loadDonations();
+	const finalizeOrder = () => {
+		Alert.alert("Order finalized!", "Thank you for your purchase!");
+		setCartItems([]);
 	};
 
-	useEffect(() => {
-		loadDonations();
-	}, []);
-
-	const renderDonation = ({
-		item,
-	}: {
-		item: { id: string; name: string; amount: number };
-	}) => (
-		<View style={styles.donationItem}>
-			<Text>
-				{item.name}: PHP {item.amount.toFixed(2)}
-			</Text>
+	const renderItem = ({ item }: { item: GroceryType }) => (
+		<View style={styles.itemContainer}>
+			<Text style={styles.title}>{item.title}</Text>
+			<Button title="Remove" onPress={() => removeItem(item.id)} />
 		</View>
 	);
 
 	return (
-		<View style={{ padding: Sizes.margin.small }}>
-			<Text style={styles.header}>Donations</Text>
-			<FlatList
-				data={donations}
-				renderItem={renderDonation}
-				keyExtractor={(item) => item.id}
-				style={styles.donationsList}
-			/>
-			<Button title="Refresh Donations" onPress={handleRefresh} />
+		<View style={styles.container}>
+			<Text style={styles.header}>Your Cart</Text>
+			{cartItems.length === 0 ? (
+				<Text>No items in your cart.</Text>
+			) : (
+				<FlatList
+					data={cartItems}
+					renderItem={renderItem}
+					keyExtractor={(item) => item.id.toString()}
+				/>
+			)}
+			<Button title="Finalize Order" onPress={finalizeOrder} />
 		</View>
 	);
-}
+};
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: 20,
+		backgroundColor: "#fff",
+	},
 	header: {
-		fontSize: Sizes.text.large,
+		fontSize: 24,
 		fontWeight: "bold",
-		textAlign: "center",
+		marginBottom: 20,
 	},
-
-	donationsList: {
-		marginTop: Sizes.margin.large,
-		marginBottom: Sizes.margin.large,
-	},
-
-	donationItem: {
-		padding: Sizes.margin.small,
+	itemContainer: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		padding: 10,
 		borderBottomWidth: 1,
-		borderBottomColor: "#ccc",
+		borderBottomColor: "#ddd",
+	},
+	title: {
+		fontSize: 18,
 	},
 });
+
+export default Cart;

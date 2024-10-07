@@ -22,20 +22,29 @@ export default function RootLayout() {
 							return <Header title={title} />;
 						},
 						tabBarShowLabel: false,
-						tabBarActiveTintColor: Colors.dark.tabIconSelected,
+						tabBarActiveTintColor: Colors.light.tabIconSelected,
 					}}
 				>
 					<Tabs.Screen
 						name="index"
-						options={{ title: "Home", tabBarIcon: () => <Home /> }}
+						options={{
+							title: "Home",
+							tabBarIcon: ({ color }) => <Home color={color} />,
+						}}
 					/>
 					<Tabs.Screen
 						name="cart"
-						options={{ title: "Cart", tabBarIcon: () => <Cart /> }}
+						options={{
+							title: "Cart",
+							tabBarIcon: ({ color }) => <Cart color={color} />,
+						}}
 					/>
 					<Tabs.Screen
 						name="orders"
-						options={{ title: "Orders", tabBarIcon: () => <Delivery /> }}
+						options={{
+							title: "Orders",
+							tabBarIcon: ({ color }) => <Delivery color={color} />,
+						}}
 					/>
 				</Tabs>
 			</GestureHandlerRootView>

@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { View, FlatList, StyleSheet } from "react-native";
 import GroceryItem from "@/components/GroceryItem";
 import GroceryDetails from "@/components/GroceryDetails";
-import { GroceryItem as GroceryType } from "@/types/GroceryItem"; // Adjust the import path as needed
+import { GroceryItem as GroceryType } from "@/types/GroceryItem";
 import BottomSheet from "@gorhom/bottom-sheet";
 
 const Index = () => {
@@ -10,7 +10,7 @@ const Index = () => {
 	const [selectedGrocery, setSelectedGrocery] = useState<GroceryType | null>(
 		null
 	);
-	const bottomSheetRef = useRef<BottomSheet>(null); // Set the type for the ref
+	const bottomSheetRef = useRef<BottomSheet>(null);
 
 	useEffect(() => {
 		async function fetchGroceries() {
@@ -30,7 +30,7 @@ const Index = () => {
 
 	const handlePress = (grocery: GroceryType) => {
 		setSelectedGrocery(grocery);
-		bottomSheetRef.current?.expand(); // Use optional chaining
+		bottomSheetRef.current?.expand();
 	};
 
 	const renderRow = ({ item }: { item: GroceryType[] }) => (
@@ -59,11 +59,11 @@ const Index = () => {
 			{selectedGrocery && (
 				<GroceryDetails
 					grocery={selectedGrocery}
-					ref={bottomSheetRef} // Pass the ref here
-					isVisible={!!selectedGrocery} // Determine visibility based on selection
+					ref={bottomSheetRef}
+					isVisible={!!selectedGrocery}
 					onClose={() => {
 						setSelectedGrocery(null);
-						bottomSheetRef.current?.close(); // Close the bottom sheet
+						bottomSheetRef.current?.close();
 					}}
 				/>
 			)}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
 		marginBottom: 16,
 	},
 	groceryContainer: {
-		width: "48%", // Ensure each grocery item takes up about half the width
+		width: "48%",
 	},
 });
 
