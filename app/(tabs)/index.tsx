@@ -1,112 +1,90 @@
-import { View, Text, StyleSheet, TextInput, Button, Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect } from "react";
-import { Image } from "expo-image";
-import { Sizes } from "@/constants/Sizes";
+import React, { useRef, useEffect, useState } from "react";
+import { View, FlatList, StyleSheet } from "react-native";
+import GroceryItem from "@/components/GroceryItem";
+import GroceryDetails from "@/components/GroceryDetails";
+import { GroceryItem as GroceryType } from "@/types/GroceryItem"; // Adjust the import path as needed
+import BottomSheet from "@gorhom/bottom-sheet";
 
-export default function index() {
-	async function fetchDishes() {
-		await fetch("https://dummyjson.com/products/category/groceries")
-			.then((res) => res.json())
-			.then(console.log);
+const Index = () => {
+	const [groceries, setGroceries] = useState<GroceryType[]>([]);
+	const [selectedGrocery, setSelectedGrocery] = useState<GroceryType | null>(
+		null
+	);
+	const bottomSheetRef = useRef<BottomSheet>(null); // Set the type for the ref
 
-		// const sampleResponse = [
-		// 	{
-		// 		id: 16,
-		// 		title: "Apple",
-		// 		description:
-		// 			"Fresh and crisp apples, perfect for snacking or incorporating into various recipes.",
-		// 		category: "groceries",
-		// 		price: 1.99,
-		// 		discountPercentage: 1.97,
-		// 		rating: 2.96,
-		// 		stock: 9,
-		// 		tags: ["fruits"],
-		// 		sku: "QTROUV79",
-		// 		weight: 8,
-		// 		dimensions: {
-		// 			width: 8.29,
-		// 			height: 5.58,
-		// 			depth: 12.41,
-		// 		},
-		// 		warrantyInformation: "2 year warranty",
-		// 		shippingInformation: "Ships in 2 weeks",
-		// 		availabilityStatus: "In Stock",
-		// 		reviews: [
-		// 			{
-		// 				rating: 4,
-		// 				comment: "Great product!",
-		// 				date: "2024-05-23T08:56:21.620Z",
-		// 				reviewerName: "Logan Lee",
-		// 				reviewerEmail: "logan.lee@x.dummyjson.com",
-		// 			},
-		// 			{
-		// 				rating: 4,
-		// 				comment: "Great product!",
-		// 				date: "2024-05-23T08:56:21.620Z",
-		// 				reviewerName: "Elena Long",
-		// 				reviewerEmail: "elena.long@x.dummyjson.com",
-		// 			},
-		// 			{
-		// 				rating: 1,
-		// 				comment: "Not as described!",
-		// 				date: "2024-05-23T08:56:21.620Z",
-		// 				reviewerName: "Grayson Coleman",
-		// 				reviewerEmail: "grayson.coleman@x.dummyjson.com",
-		// 			},
-		// 		],
-		// 		returnPolicy: "60 days return policy",
-		// 		minimumOrderQuantity: 44,
-		// 		meta: {
-		// 			createdAt: "2024-05-23T08:56:21.620Z",
-		// 			updatedAt: "2024-05-23T08:56:21.620Z",
-		// 			barcode: "2517819903837",
-		// 			qrCode: "https://assets.dummyjson.com/public/qr-code.png",
-		// 		},
-		// 		images: [
-		// 			"https://cdn.dummyjson.com/products/images/groceries/Apple/1.png",
-		// 		],
-		// 		thumbnail:
-		// 			"https://cdn.dummyjson.com/products/images/groceries/Apple/thumbnail.png",
-		// 	},
-		// ];
-	}
+	useEffect(() => {
+		async function fetchGroceries() {
+			try {
+				const response = await fetch(
+					"https://dummyjson.com/products/category/groceries"
+				);
+				const groceriesJson = await response.json();
+				setGroceries(groceriesJson.products);
+			} catch (error) {
+				console.error("Failed to fetch groceries", error);
+			}
+		}
 
-	// fetch dishes with useEffect
+		fetchGroceries();
+	}, []);
 
-	return (
-		<View>
-			<Text>Hello</Text>
+	const handlePress = (grocery: GroceryType) => {
+		setSelectedGrocery(grocery);
+		bottomSheetRef.current?.expand(); // Use optional chaining
+	};
+
+	const renderRow = ({ item }: { item: GroceryType[] }) => (
+		<View style={styles.row}>
+			{item.map((grocery) => (
+				<View style={styles.groceryContainer} key={grocery.id}>
+					<GroceryItem item={grocery} onPress={() => handlePress(grocery)} />
+				</View>
+			))}
 		</View>
 	);
-}
+
+	const groupedGroceries = [];
+	for (let i = 0; i < groceries.length; i += 2) {
+		groupedGroceries.push(groceries.slice(i, i + 2));
+	}
+
+	return (
+		<View style={styles.container}>
+			<FlatList
+				data={groupedGroceries}
+				renderItem={renderRow}
+				keyExtractor={(item, index) => index.toString()}
+			/>
+
+			{selectedGrocery && (
+				<GroceryDetails
+					grocery={selectedGrocery}
+					ref={bottomSheetRef} // Pass the ref here
+					isVisible={!!selectedGrocery} // Determine visibility based on selection
+					onClose={() => {
+						setSelectedGrocery(null);
+						bottomSheetRef.current?.close(); // Close the bottom sheet
+					}}
+				/>
+			)}
+		</View>
+	);
+};
 
 const styles = StyleSheet.create({
-	header: {
-		fontSize: Sizes.text.large,
-		fontWeight: "bold",
-		textAlign: "center",
-	},
-
-	form: {
-		flexDirection: "column",
+	container: {
+		flex: 1,
+		padding: 10,
 		backgroundColor: "#fff",
-		padding: Sizes.margin.small,
 	},
-
-	label: {
-		fontSize: Sizes.text.medium,
-		marginTop: Sizes.margin.small,
-		marginBottom: Sizes.margin.medium,
+	row: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		marginBottom: 16,
 	},
-
-	input: {
-		padding: 4,
-		width: "100%",
-		borderWidth: 1,
-	},
-
-	donateBtn: {
-		marginTop: Sizes.margin.medium,
+	groceryContainer: {
+		width: "48%", // Ensure each grocery item takes up about half the width
 	},
 });
+
+export default Index;
